@@ -1,0 +1,892 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+      @import url('https://fonts.googleapis.com/css?family=Cutive+Mono:400,700,400italic');
+			body {
+				background: white;
+				color: rgb(60, 60, 60);
+			}
+			body, pre, #legend span {
+				font-family: 'Cutive Mono', monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: lightgrey;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(150, 150, 150);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(164, 0, 0) }
+.cov1 { color: hsl(100, 0%, 30%) }
+.cov2 { color: hsl(100, 10%, 30%) }
+.cov3 { color: hsl(100, 20%, 30%) }
+.cov4 { color: hsl(100, 30%, 30%) }
+.cov5 { color: hsl(100, 40%, 30%) }
+.cov6 { color: hsl(100, 50%, 30%) }
+.cov7 { color: hsl(100, 60%, 30%) }
+.cov8 { color: hsl(100, 70%, 30%) }
+.cov9 { color: hsl(100, 80%, 30%) }
+.cov10 { color: hsl(100, 90%, 30%) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+
+				<option value="file0">go.didenko.com/fst/file_del_all.go (71.4%)</option>
+
+				<option value="file1">go.didenko.com/fst/file_info_path.go (83.3%)</option>
+
+				<option value="file2">go.didenko.com/fst/file_rank.go (93.8%)</option>
+
+				<option value="file3">go.didenko.com/fst/temp_dir.go (67.2%)</option>
+
+				<option value="file4">go.didenko.com/fst/tree_copy.go (76.2%)</option>
+
+				<option value="file5">go.didenko.com/fst/tree_create.go (78.8%)</option>
+
+				<option value="file6">go.didenko.com/fst/tree_diff.go (94.9%)</option>
+
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+
+			</div>
+		</div>
+		<div id="content">
+
+		<pre class="file" id="file0" style="display: none">// Copyright 2017 Vlad Didenko. All rights reserved.
+// See the included LICENSE.md file for licensing information
+
+package fst // import "go.didenko.com/fst"
+
+import (
+        "os"
+        "path/filepath"
+)
+
+// FileDelAll recursevely removes file `name` from the `root`
+// directory. It is useful to get truly empty directories after
+// cloning checked out almost empty directories containing
+// a stake file like `.gitkeep`
+func FileDelAll(root, name string) error <span class="cov8" title="1">{
+        return filepath.Walk(root, func(p string, i os.FileInfo, err error) error </span><span class="cov8" title="1">{
+                if err != nil </span><span class="cov0" title="0">{
+                        return (err)
+                }</span>
+                <span class="cov8" title="1">if filepath.Base(p) == name </span><span class="cov8" title="1">{
+                        if os.Remove(p) != nil </span><span class="cov0" title="0">{
+                                return (err)
+                        }</span>
+                }
+                <span class="cov8" title="1">return nil</span>
+        })
+}
+</pre>
+
+		<pre class="file" id="file1" style="display: none">// Copyright 2017 Vlad Didenko. All rights reserved.
+// See the included LICENSE.md file for licensing information
+
+package fst // import "go.didenko.com/fst"
+
+import (
+        "os"
+)
+
+// FileInfoPath is a wrapper of os.FileInfo with an additional
+// field to store the path to the file of interest
+type FileInfoPath struct {
+        os.FileInfo
+        path string
+}
+
+// NewFileInfoPath creates new FileInfoPath struct
+func NewFileInfoPath(path string) (*FileInfoPath, error) <span class="cov8" title="1">{
+        fi, err := os.Stat(path)
+        if err != nil </span><span class="cov0" title="0">{
+                return &amp;FileInfoPath{nil, path}, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;FileInfoPath{fi, path}, nil</span>
+}
+
+// MakeFipSlice creates a slice of *FileInfoPaths based on
+// provided list of file names. It returns the first
+// encountered error.
+func MakeFipSlice(files ...string) ([]*FileInfoPath, error) <span class="cov8" title="1">{
+
+        fips := make([]*FileInfoPath, 0)
+
+        for _, name := range files </span><span class="cov8" title="1">{
+
+                fip, err := NewFileInfoPath(name)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov8" title="1">fips = append(fips, fip)</span>
+        }
+
+        <span class="cov8" title="1">return fips, nil</span>
+}
+
+// Path returns the stored full path in the FileInfoPath struct
+func (fip *FileInfoPath) Path() string <span class="cov8" title="1">{
+        return fip.path
+}</span>
+</pre>
+
+		<pre class="file" id="file2" style="display: none">// Copyright 2017 Vlad Didenko. All rights reserved.
+// See the included LICENSE.md file for licensing information
+
+package fst // import "go.didenko.com/fst"
+
+import (
+        "bufio"
+        "os"
+        "testing"
+        "time"
+)
+
+// FileRank is the signature of functions which are
+// provided to TreeDiff to compare two *FileInfoPath structs
+// and related files.
+//
+// When comparing filesystem objects, the algorithm used in
+// the TreeDiff function expects the "less-than" logic from
+// comparator functions. It means, that a comparator is expected
+// to return "true" if and only if the "left"  parameter is
+// strictly less than the "right" parameter according to the
+// comparator's criteria.
+//
+// FileRank does not provide an error handling interface. If
+// needed, it can be implemented via a closure. See the
+// ByContent comparator generator for an example of it.
+type FileRank func(left, right *FileInfoPath) bool
+
+// ByName is basic for comparing directories and should
+// be provided as a first comparator in most cases
+func ByName(left, right *FileInfoPath) bool <span class="cov8" title="1">{
+        return left.Name() &lt; right.Name()
+}</span>
+
+// ByDir differentiates directorries vs. files and puts
+// directories earlier in a sort order
+func ByDir(left, right *FileInfoPath) bool <span class="cov8" title="1">{
+        return left.IsDir() &amp;&amp; !right.IsDir()
+}</span>
+
+// BySize compares sizes of files, given that both of the
+// files are regular files as opposed to not directories, etc.
+func BySize(left, right *FileInfoPath) bool <span class="cov8" title="1">{
+        return left.Mode().IsRegular() &amp;&amp;
+                right.Mode().IsRegular() &amp;&amp;
+                (left.Size() &lt; right.Size())
+}</span>
+
+// ByTime compares files' last modification times with up to
+// 10µs precision to accommodate filesyustem quirks
+func ByTime(left, right *FileInfoPath) bool <span class="cov8" title="1">{
+        return left.ModTime().Before(right.ModTime().Add(-10 * time.Microsecond))
+}</span>
+
+// ByPerm compares bits 0-8 of Unix-like file permissions
+func ByPerm(left, right *FileInfoPath) bool <span class="cov8" title="1">{
+        return left.Mode().Perm() &lt; right.Mode().Perm()
+}</span>
+
+// ByContent returns a function which compares files'
+// content without first comparing sizes. For example,
+// file containing "aaa" will rank as lesser than the one
+// containing "ab" even though it is opposite to their sizes.
+// To consider sizes first, make sure to specify the BySize
+// comparator earlier in the chain.
+func ByContent(t *testing.T) FileRank <span class="cov8" title="1">{
+        return func(left, right *FileInfoPath) bool </span><span class="cov8" title="1">{
+                leftF, err := os.Open(left.Path())
+                if err != nil </span><span class="cov0" title="0">{
+                        t.Fatal(err)
+                }</span>
+                <span class="cov8" title="1">defer leftF.Close()
+
+                rightF, err := os.Open(right.Path())
+                if err != nil </span><span class="cov0" title="0">{
+                        t.Fatal(err)
+                }</span>
+                <span class="cov8" title="1">defer rightF.Close()
+
+                leftBuf := bufio.NewReader(leftF)
+                rightBuf := bufio.NewReader(rightF)
+
+                for </span><span class="cov8" title="1">{
+                        rByte, err := rightBuf.ReadByte()
+                        if err != nil </span><span class="cov8" title="1">{
+                                return false
+                        }</span>
+
+                        <span class="cov8" title="1">lByte, err := leftBuf.ReadByte()
+                        if err != nil </span><span class="cov8" title="1">{
+                                return true
+                        }</span>
+
+                        <span class="cov8" title="1">if lByte == rByte </span><span class="cov8" title="1">{
+                                continue</span>
+                        }
+
+                        <span class="cov8" title="1">if lByte &lt; rByte </span><span class="cov8" title="1">{
+                                return true
+                        }</span>
+
+                        <span class="cov8" title="1">return false</span>
+                }
+        }
+}
+
+// Less applies provided comparators to the pair of *FileInfoPath structs.
+func Less(left, right *FileInfoPath, cmps ...FileRank) bool <span class="cov8" title="1">{
+        for _, less := range cmps </span><span class="cov8" title="1">{
+                if less(left, right) </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}
+</pre>
+
+		<pre class="file" id="file3" style="display: none">// Copyright 2017 Vlad Didenko. All rights reserved.
+// See the included LICENSE.md file for licensing information
+
+package fst // import "go.didenko.com/fst"
+
+import (
+        "io"
+        "io/ioutil"
+        "log"
+        "os"
+        "path/filepath"
+)
+
+// TempInitDir function creates a directory for holding
+// temporary files according to platform preferences and
+// returns the directory name and a cleanup function.
+//
+// The returned values are:
+//
+// 1. a string containing the created temporary directory path
+//
+// 2. a cleanup function to change back to the old working
+// directory and to delete the temporary directory
+//
+// 3. an error
+//
+// If there was an error while creating the temporary
+// directory, then the returned directory name is empty,
+// cleanup funcion is nil, and the temp folder is
+// expected to be already removed.
+func TempInitDir() (string, func(), error) <span class="cov8" title="1">{
+        root, err := ioutil.TempDir("", "")
+        if err != nil </span><span class="cov0" title="0">{
+                os.RemoveAll(root)
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">return root, func() </span><span class="cov8" title="1">{
+                dirs := make([]string, 0)
+
+                err := filepath.Walk(
+                        root,
+                        func(fn string, fi os.FileInfo, er error) error </span><span class="cov8" title="1">{
+
+                                if fi.IsDir() </span><span class="cov8" title="1">{
+                                        err = os.Chmod(fn, 0700)
+                                        if err != nil </span><span class="cov0" title="0">{
+                                                return err
+                                        }</span>
+
+                                        <span class="cov8" title="1">dirs = append(dirs, fn)
+                                        return nil</span>
+                                }
+
+                                <span class="cov8" title="1">return os.Remove(fn)</span>
+                        })
+
+                <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                        log.Fatalln(err)
+                }</span>
+
+                <span class="cov8" title="1">for i := len(dirs) - 1; i &gt;= 0; i-- </span><span class="cov8" title="1">{
+                        err = os.RemoveAll(dirs[i])
+                        if err != nil </span><span class="cov0" title="0">{
+                                log.Fatalln(err)
+                        }</span>
+                }
+        }, nil
+}
+
+// TempInitChdir creates a temporary directory in the same
+// fashion as TempInitDir. It also changes into the newly
+// created temporary directory and adds returning back
+// to the old working directory to the returned cleanup
+// function. The returned values are:
+//
+// 1. a string containing the previous working directory
+//
+// 2. a cleanup function to change back to the old working
+// directory and to delete the temporary directory
+//
+// 3. an error
+func TempInitChdir() (string, func(), error) <span class="cov8" title="1">{
+        root, cleanup, err := TempInitDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">wd, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                cleanup()
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">err = os.Chdir(root)
+        if err != nil </span><span class="cov0" title="0">{
+                cleanup()
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">return wd,
+                func() </span><span class="cov8" title="1">{
+                        os.Chdir(wd)
+                        cleanup()
+                }</span>,
+                nil
+}
+
+// TempCloneDir function creates a copy of an existing
+// directory with it's content - regular files only - for
+// holding temporary test files.
+//
+// The returned values are:
+//
+// 1. a string containing the created temporary directory path
+//
+// 2. a cleanup function to change back to the old working
+// directory and to delete the temporary directory
+//
+// 3. an error
+//
+// If there was an error while cloning the temporary
+// directory, then the returned directory name is empty,
+// cleanup funcion is nil, and the temp folder is
+// expected to be already removed.
+//
+// The clone attempts to maintain the basic original Unix
+// permissions (9-bit only, from the rxwrwxrwx set).
+// If, however, the user does not have read permission
+// for a file, or read+execute permission for a directory,
+// then the clone process will naturally fail.
+func TempCloneDir(src string) (string, func(), error) <span class="cov8" title="1">{
+        root, cleanup, err := TempInitDir()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">err = TreeCopy(src, root)
+        if err != nil </span><span class="cov0" title="0">{
+                cleanup()
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">return root, cleanup, nil</span>
+}
+
+// TempCloneChdir clones a temporary directory in the same
+// fashion as TempCloneDir. It also changes into the newly
+// cloned temporary directory and adds returning back
+// to the old working directory to the returned cleanup
+// function. The returned values are:
+//
+// 1. a string containing the previous working directory
+//
+// 2. a cleanup function to change back to the old working
+// directory and to delete the temporary directory
+//
+// 3. an error
+func TempCloneChdir(src string) (string, func(), error) <span class="cov8" title="1">{
+        root, cleanup, err := TempCloneDir(src)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">wd, err := os.Getwd()
+        if err != nil </span><span class="cov0" title="0">{
+                cleanup()
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">err = os.Chdir(root)
+        if err != nil </span><span class="cov0" title="0">{
+                cleanup()
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">return wd,
+                func() </span><span class="cov8" title="1">{
+                        os.Chdir(wd)
+                        cleanup()
+                }</span>,
+                nil
+}
+
+// TempCreateChdir is a combination of `TempInitChdir` and
+// `TreeCreate` functions. It creates a termporary directory,
+// changes into it, populates it fron the provided `config`
+// as `TreeCreate` would, and returns the old directory name
+// and the cleanup function.
+func TempCreateChdir(config io.Reader) (string, func(), error) <span class="cov8" title="1">{
+
+        old, cleanup, err := TempInitChdir()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">err = TreeCreate(config)
+        if err != nil </span><span class="cov0" title="0">{
+                cleanup()
+                return "", nil, err
+        }</span>
+
+        <span class="cov8" title="1">return old, cleanup, nil</span>
+}
+</pre>
+
+		<pre class="file" id="file4" style="display: none">// Copyright 2017 Vlad Didenko. All rights reserved.
+// See the included LICENSE.md file for licensing information
+
+package fst // import "go.didenko.com/fst"
+
+import (
+        "io"
+        "os"
+        "path/filepath"
+        "time"
+)
+
+type dirEntry struct {
+        name string
+        perm os.FileMode
+        time time.Time
+}
+
+// TreeCopy duplicates redular files and directories from
+// inside the source directory into an existing destination
+// directory.
+func TreeCopy(src, dst string) error <span class="cov8" title="1">{
+
+        srcClean := filepath.Clean(src)
+        srcLen := len(srcClean)
+        dirs := make([]*dirEntry, 0)
+
+        err := filepath.Walk(
+                srcClean,
+                func(fn string, fi os.FileInfo, er error) error </span><span class="cov8" title="1">{
+
+                        if er != nil || len(fn) &lt;= srcLen </span><span class="cov8" title="1">{
+                                return er
+                        }</span>
+
+                        <span class="cov8" title="1">dest := filepath.Join(dst, fn[srcLen:])
+
+                        if fi.Mode().IsRegular() </span><span class="cov8" title="1">{
+
+                                srcf, err := os.Open(fn)
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return err
+                                }</span>
+
+                                <span class="cov8" title="1">dstf, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, 0600)
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return err
+                                }</span>
+
+                                <span class="cov8" title="1">_, err = io.Copy(dstf, srcf)
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return err
+                                }</span>
+
+                                <span class="cov8" title="1">err = srcf.Close()
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return err
+                                }</span>
+
+                                <span class="cov8" title="1">err = dstf.Close()
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return err
+                                }</span>
+
+                                <span class="cov8" title="1">err = os.Chmod(dest, fi.Mode())
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return err
+                                }</span>
+
+                                <span class="cov8" title="1">destMT := fi.ModTime()
+                                return os.Chtimes(dest, destMT, destMT)</span>
+                        }
+
+                        <span class="cov8" title="1">if fi.Mode().IsDir() </span><span class="cov8" title="1">{
+
+                                dirs = append(dirs, &amp;dirEntry{dest, fi.Mode().Perm(), fi.ModTime()})
+                                return os.Mkdir(dest, 0700)
+                        }</span>
+                        <span class="cov0" title="0">return nil</span>
+                })
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">for i := len(dirs) - 1; i &gt;= 0; i-- </span><span class="cov8" title="1">{
+                err := os.Chmod(dirs[i].name, dirs[i].perm)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov8" title="1">err = os.Chtimes(dirs[i].name, dirs[i].time, dirs[i].time)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+
+		<pre class="file" id="file5" style="display: none">// Copyright 2017 Vlad Didenko. All rights reserved.
+// See the included LICENSE.md file for licensing information
+
+package fst // import "go.didenko.com/fst"
+import (
+        "bufio"
+        "io"
+        "os"
+        "regexp"
+        "strconv"
+        "time"
+)
+
+type emptyErr struct {
+        error
+}
+
+// TreeCreate parses a suplied Reader for the tree information
+// and follows the instructions to create files and directories.
+//
+// The input has line records with three or four fields
+// separated by one or more tabs. White space is trimmed on
+// both ends of lines. Empty lines are skipped. The general
+// line format is:
+//
+// &lt;1. time&gt;        &lt;2. permissions&gt;        &lt;3. name&gt; &lt;4. optional content&gt;
+//
+// Field 1: Time in RFC3339 format, as shown at
+// https://golang.org/pkg/time/#RFC3339
+//
+// Field 2: Octal (required) representation of FileMode, as at
+// https://golang.org/pkg/os/#FileMode
+//
+// Field 3: is the file or directory path to be created. If the
+// first character of the path is a double-quote or a back-tick,
+// then the path wil be passed through strconv.Unquote() function.
+// It allows for using tab-containing or otherwise weird names.
+// The quote or back-tick should be balanced at the end of
+// the field.
+//
+// If the path in Field 3 ends with a forward slash, then it is
+// treated as a directory, otherwise - as a regular file.
+//
+// Field 4: is optional content to be written into the file. It
+// follows the same quotation rules as paths in Field 3.
+// Directory entries ignore Field 4 if present.
+//
+// It is up to the caller to deal with conflicting file and
+// directory names in the input. TreeCreate processes the
+// input line-by-line and will return with error at a first
+// problem it runs into.
+func TreeCreate(config io.Reader) error <span class="cov8" title="1">{
+
+        dirs := make([]*dirEntry, 0)
+
+        scanner := bufio.NewScanner(config)
+        for scanner.Scan() </span><span class="cov8" title="1">{
+
+                mt, perm, name, content, err := parse(scanner.Text())
+                if err != nil </span><span class="cov8" title="1">{
+                        if _, ok := err.(*emptyErr); ok </span><span class="cov8" title="1">{
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">return err</span>
+                }
+
+                <span class="cov8" title="1">if name[len(name)-1] == '/' </span><span class="cov8" title="1">{
+                        name = name[:len(name)-1]
+
+                        if err = os.Mkdir(name, 0700); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+
+                        <span class="cov8" title="1">dirs = append(dirs, &amp;dirEntry{name, perm, mt})
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">f, err := os.Create(name)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov8" title="1">if len(content) &gt; 0 </span><span class="cov8" title="1">{
+                        _, err = f.WriteString(content)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                }
+
+                <span class="cov8" title="1">err = f.Close()
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov8" title="1">err = os.Chmod(name, perm)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov8" title="1">err = os.Chtimes(name, mt, mt)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">err := scanner.Err()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">for i := len(dirs) - 1; i &gt;= 0; i-- </span><span class="cov8" title="1">{
+                err := os.Chmod(dirs[i].name, dirs[i].perm)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov8" title="1">err = os.Chtimes(dirs[i].name, dirs[i].time, dirs[i].time)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+var (
+        re    = regexp.MustCompile(`^\s*([-0-9T:Z]+)\t+(0[0-7]{0,4})\t+([^\t]+)(\t+([^\t]+))?\s*$`)
+        empty = regexp.MustCompile(`^\s*$`)
+)
+
+func parse(line string) (time.Time, os.FileMode, string, string, error) <span class="cov8" title="1">{
+
+        if empty.MatchString(line) </span><span class="cov8" title="1">{
+                return time.Time{}, 0, "", "", &amp;emptyErr{}
+        }</span>
+
+        <span class="cov8" title="1">parts := re.FindStringSubmatch(line)
+
+        mt, err := time.Parse(time.RFC3339, parts[1])
+        if err != nil </span><span class="cov0" title="0">{
+                return time.Time{}, 0, "", "", err
+        }</span>
+        <span class="cov8" title="1">mt = mt.Round(0)
+
+        perm64, err := strconv.ParseUint(parts[2], 8, 32)
+        if err != nil </span><span class="cov0" title="0">{
+                return time.Time{}, 0, "", "", err
+        }</span>
+
+        <span class="cov8" title="1">perm := os.FileMode(perm64)
+
+        var path string
+        if parts[3][0] == '`' || parts[3][0] == '"' </span><span class="cov8" title="1">{
+                path, err = strconv.Unquote(parts[3])
+                if err != nil </span><span class="cov0" title="0">{
+                        return time.Time{}, 0, "", "", err
+                }</span>
+        }<span class="cov8" title="1"> else {
+                path = parts[3]
+        }</span>
+
+        <span class="cov8" title="1">var content string
+        if len(parts[5]) &gt; 0 </span><span class="cov8" title="1">{
+
+                if parts[5][0] == '`' || parts[5][0] == '"' </span><span class="cov8" title="1">{
+                        content, err = strconv.Unquote(parts[5])
+                        if err != nil </span><span class="cov0" title="0">{
+                                return time.Time{}, 0, "", "", err
+                        }</span>
+                }<span class="cov8" title="1"> else {
+                        content = parts[5]
+                }</span>
+        }
+
+        <span class="cov8" title="1">return mt, perm, path, content, nil</span>
+}
+</pre>
+
+		<pre class="file" id="file6" style="display: none">// Copyright 2017 Vlad Didenko. All rights reserved.
+// See the included LICENSE.md file for licensing information
+
+package fst // import "go.didenko.com/fst"
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+)
+
+// TreeDiff produces a slice of human-readable notes about
+// recursive differences between two directory trees on a
+// filesystem. Only plan directories and plain files are
+// compared in the tree. Specific comparisons are determined
+// By the variadic slice of FileRank functions, like the
+// ones in this package. A commonly used set of comparators
+// is ByName, ByDir, BySize, and ByContent
+func TreeDiff(a string, b string, comps ...FileRank) ([]string, error) <span class="cov8" title="1">{
+
+        listA, err := collectFileInfo(a)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">listB, err := collectFileInfo(b)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">onlyA, onlyB := collectDifferent(listA, listB, comps...)
+
+        var diags []string
+
+        if len(onlyA) &gt; 0 </span><span class="cov8" title="1">{
+                diagA := fmt.Sprintf("Unique items from \"%s\": \n", a)
+                for _, fi := range onlyA </span><span class="cov8" title="1">{
+                        diagA = diagA + fmt.Sprintf("dir:%v, sz:%v, mode:%v, time:%v, name: %v\n", fi.IsDir(), fi.Size(), fi.Mode(), fi.ModTime(), fi.Name())
+                }</span>
+                <span class="cov8" title="1">diags = append(diags, diagA)</span>
+        }
+        <span class="cov8" title="1">if len(onlyB) &gt; 0 </span><span class="cov8" title="1">{
+                diagB := fmt.Sprintf("Unique items from \"%s\": \n", b)
+                for _, fi := range onlyB </span><span class="cov8" title="1">{
+                        diagB = diagB + fmt.Sprintf("dir:%v, sz:%v, mode:%v, time:%v, name: %v\n", fi.IsDir(), fi.Size(), fi.Mode(), fi.ModTime(), fi.Name())
+                }</span>
+                <span class="cov8" title="1">diags = append(diags, diagB)</span>
+        }
+
+        <span class="cov8" title="1">return diags, nil</span>
+}
+
+// collectDifferent forms file infomation slices for files
+// unique to either left or right collections. It is based
+// on a modified algorithm from the go.didenko.com/slops package
+func collectDifferent(left, right []*FileInfoPath, comps ...FileRank) (onlyLeft, onlyRight []*FileInfoPath) <span class="cov8" title="1">{
+
+        onlyLeft = make([]*FileInfoPath, 0)
+        onlyRight = make([]*FileInfoPath, 0)
+
+        for l, r := 0, 0; l &lt; len(left) || r &lt; len(right); </span><span class="cov8" title="1">{
+
+                if r &lt; len(right) &amp;&amp; (l == len(left) || Less(right[r], left[l], comps...)) </span><span class="cov8" title="1">{
+                        onlyRight = append(onlyRight, right[r])
+                        r++
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">if l &lt; len(left) &amp;&amp; (r == len(right) || Less(left[l], right[r], comps...)) </span><span class="cov8" title="1">{
+                        onlyLeft = append(onlyLeft, left[l])
+                        l++
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">l++
+                r++</span>
+        }
+
+        <span class="cov8" title="1">return onlyLeft, onlyRight</span>
+}
+
+func collectFileInfo(dir string) ([]*FileInfoPath, error) <span class="cov8" title="1">{
+
+        list := make([]*FileInfoPath, 0)
+
+        err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error </span><span class="cov8" title="1">{
+                if err == nil &amp;&amp; path != dir </span><span class="cov8" title="1">{
+                        list = append(list, &amp;FileInfoPath{f, path})
+                }</span>
+                <span class="cov8" title="1">return err</span>
+        })
+
+        <span class="cov8" title="1">return list, err</span>
+}
+</pre>
+
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
