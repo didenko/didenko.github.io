@@ -48,10 +48,6 @@
 			.remark-slide-content li {
 				margin-bottom: 0.5em;
 			}
-			.remark-slide-content .red {
-				color: #600;
-				font-variant: bold;
-			}
     </style>
   </head>
   <body onload="var slideshow = remark.create({
@@ -63,14 +59,10 @@
 layout: true
 class: left middle
 
-.red[
-This is an outdated version. Please, see the latest version in <a href=".">the list</a>
-]
-
-
 ---
 # is it worth a proposal to Go?<br />
-### my ¢2 share of the error handling saga<br /><br />
+### my ¢2 share of the error handling saga<br />
+v0.1.0<br /><br />
 
 .footnote[ .right[
 &copy; 2017 Vlad Didenko&nbsp;&nbsp;|&nbsp;&nbsp;@vldid
@@ -176,15 +168,15 @@ We are looking to have a
 # how about:
 
 ```
-srcf, err := os.Open(fn)
+srcf, err() := os.Open(fn)
 
-dstf, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, 0600)
+dstf, err() := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, 0600)
 
-_, err = io.Copy(dstf, srcf)
+_, err() = io.Copy(dstf, srcf)
 
-err = srcf.Close()
+err() = srcf.Close()
 
-err = dstf.Close()
+err() = dstf.Close()
 ```
 
 ... and keep the error processing logic somewhere else.
@@ -204,22 +196,22 @@ err = dstf.Close()
 a `grab` (new keyword) statement attaching a code block to a variable name,<br />like in its simple form here:
 
 ```
-grab err {
+grab err() {
 	if err != nil {
 		return err
 	}
 }
 ```
 ```
-srcf, err := os.Open(fn)
+srcf, err() := os.Open(fn)
 
-dstf, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, 0600)
+dstf, err() := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, 0600)
 
-_, err = io.Copy(dstf, srcf)
+_, err() = io.Copy(dstf, srcf)
 
-err = srcf.Close()
+err() = srcf.Close()
 
-err = dstf.Close()
+err() = dstf.Close()
 ```
 
 ---
@@ -272,7 +264,7 @@ The key is not a number of rules, but how natural the actual use will feel.
 ---
 # grab rules 2/3:
 
-* `grab someVar {}`&nbsp;&nbsp;releases preceeding&nbsp;&nbsp;`grab someVar`&nbsp;&nbsp;statement
+* `grab someVar() {}`&nbsp;&nbsp;releases preceeding&nbsp;&nbsp;`grab someVar`&nbsp;&nbsp;statement
 * `grab` can only be defined at the same level of nesting as the variable declaration (until we know better)
 * need to decide if overriding `grab` statements are allowed to change signature
 * assigning to a grabbed variable in an enclosed scope is either prohibited, or ***needs more design thinking*** - see further notes
@@ -300,11 +292,11 @@ Every complex idea has a few pink elephants in it. I know some for this one.
 
 One version of the problem:
 ```
-grab err {
+grab err() {
 	...
 }
 go func(){
-	err = ...
+	err() = ...
 }()
 ```
 While it seems to be possible to come up with a reasonable execution path via a combination of rules and restrictions, it would be great to first hear a community take on this.
@@ -321,18 +313,18 @@ However at a closer look it is not indeed an issue. Grab blocks are assosiated w
 
 One version of the problem:
 ```
-grab varA {
+grab varA() {
 	<logic A1>
 }
-grab varB {
+grab varB() {
 	...
-	varA = ...
+	varA() = ...
 	...
 }
-grab varA {
+grab varA() {
 	<logic A2>
 }
-varB = ... // is it clear that <logic A1> will be inlined?
+varB() = ... // is it clear that <logic A1> will be inlined?
 ```
 It seems that recursion combined with `grab` re-definition adds significant confusion. Which one should be dropped, if no other solution suggested? Both?
 
