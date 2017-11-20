@@ -63,15 +63,10 @@
 layout: true
 class: left middle
 
-.red[
-This is an outdated version. Please, see the latest version in <a href="index.html">the list</a>
-]
-
-
 ---
 # is it worth a proposal to Go?<br />
 ### my ¢2 share of the error handling saga<br />
-v0.1.0<br /><br />
+v0.1.1<br /><br />
 
 .footnote[ .right[
 &copy; 2017 Vlad Didenko&nbsp;&nbsp;|&nbsp;&nbsp;@vldid
@@ -229,7 +224,7 @@ err() = dstf.Close()
 * `grab` statements may have parameters, similar to `func` (variadic ?)
 * `grab` blocks have no return values
 * variables being assigned may use parameters to send data to `grab` blocks
-* empty parameter lists can be omitted both in `grab` definitions and variable assignments for backward compatibility
+* empty parameter lists are required both in `grab` definitions and variable assignments
 
 ```
 grab myErr(instanceId int) {
@@ -345,6 +340,15 @@ with a proposal is a large time commitment.<br />
 So, from the community perspective,
 
 # <br />tell me<br />if it is worth a proposal to Go?
+
+???
+# revision history:
+
+date       | version | comment
+-----------|---------|-----------------------------------------------------
+2017-11-20 | 0.1.1   | Fixed doc bug stating optional empty parameter lists
+2017-11-17 | 0.1.0   | Added required empty parameter lists to examples
+2017-11-17 | 0.0.0   | First version of the grab presentation
 
 		</textarea>
     <script type="text/javascript">
